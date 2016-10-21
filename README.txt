@@ -6,7 +6,7 @@ Will look for either a delay (in case of time-based) or some text (string indica
 Delay between requests and proxy usage hardcoded for now. Still needs much work.
 
 usage example:
-Usage: python sqlbrute.py -i <inputfile> -s <sqlitype> [-t <textmatch>|-d <timedelay>]
+	python sqlbrute.py -i <inputfile> -s <sqlitype> [-t <textmatch>|-d <timedelay>]
 Arguments:
  -i, --ifile        Input file. Defines the file containing your request.
  -s, --sqlitype     SQL injection type. Can be either "text" or "time".
